@@ -30,7 +30,7 @@
 module hps_io #(parameter CONF_STR, CONF_STR_BRAM=1, PS2DIV=0, WIDE=0, VDNUM=1, BLKSZ=2, PS2WE=0)
 (
 	input             clk_sys,
-	inout      [45:0] HPS_BUS,
+	inout      [48:0] HPS_BUS,
 
 	// buttons up to 32
 	output reg [31:0] joystick_0,
@@ -39,7 +39,7 @@ module hps_io #(parameter CONF_STR, CONF_STR_BRAM=1, PS2DIV=0, WIDE=0, VDNUM=1, 
 	output reg [31:0] joystick_3,
 	output reg [31:0] joystick_4,
 	output reg [31:0] joystick_5,
-	
+
 	// analog -127..+127, Y: [15:8], X: [7:0]
 	output reg [15:0] joystick_analog_0,
 	output reg [15:0] joystick_analog_1,
@@ -64,9 +64,37 @@ module hps_io #(parameter CONF_STR, CONF_STR_BRAM=1, PS2DIV=0, WIDE=0, VDNUM=1, 
 	output reg  [8:0] spinner_4,
 	output reg  [8:0] spinner_5,
 
+	// ps2 keyboard emulation
+	output            ps2_kbd_clk_out,
+	output            ps2_kbd_data_out,
+	input             ps2_kbd_clk_in,
+	input             ps2_kbd_data_in,
+
+	input       [2:0] ps2_kbd_led_status,
+	input       [2:0] ps2_kbd_led_use,
+
+	output            ps2_mouse_clk_out,
+	output            ps2_mouse_data_out,
+	input             ps2_mouse_clk_in,
+	input             ps2_mouse_data_in,
+
+	// ps2 alternative interface.
+
+	// [8] - extended, [9] - pressed, [10] - toggles with every press/release
+	output reg [10:0] ps2_key = 0,
+
+	// [24] - toggles with every event
+	output reg [24:0] ps2_mouse = 0,
+	output reg [15:0] ps2_mouse_ext = 0, // 15:8 - reserved(additional buttons), 7:0 - wheel movements
+
 	output      [1:0] buttons,
 	output            forced_scandoubler,
 	output            direct_video,
+
+	//toggle to force notify of video mode change
+	input             new_vmode,
+
+	inout      [21:0] gamma_bus,
 
 	output reg [63:0] status,
 	input      [63:0] status_in,
@@ -76,8 +104,6 @@ module hps_io #(parameter CONF_STR, CONF_STR_BRAM=1, PS2DIV=0, WIDE=0, VDNUM=1, 
 	input             info_req,
 	input       [7:0] info,
 
-	//toggle to force notify of video mode change
-	input             new_vmode,
 
 	// SD config
 	output reg [VD:0] img_mounted,  // signaling that new image has been mounted
@@ -122,31 +148,6 @@ module hps_io #(parameter CONF_STR, CONF_STR_BRAM=1, PS2DIV=0, WIDE=0, VDNUM=1, 
 	// UART flags
 	output reg  [7:0] uart_mode,
 	output reg [31:0] uart_speed,
-
-	// ps2 keyboard emulation
-	output            ps2_kbd_clk_out,
-	output            ps2_kbd_data_out,
-	input             ps2_kbd_clk_in,
-	input             ps2_kbd_data_in,
-
-	input       [2:0] ps2_kbd_led_status,
-	input       [2:0] ps2_kbd_led_use,
-
-	output            ps2_mouse_clk_out,
-	output            ps2_mouse_data_out,
-	input             ps2_mouse_clk_in,
-	input             ps2_mouse_data_in,
-
-	// ps2 alternative interface.
-
-	// [8] - extended, [9] - pressed, [10] - toggles with every press/release
-	output reg [10:0] ps2_key = 0,
-
-	// [24] - toggles with every event
-	output reg [24:0] ps2_mouse = 0,
-	output reg [15:0] ps2_mouse_ext = 0, // 15:8 - reserved(additional buttons), 7:0 - wheel movements
-
-	inout      [21:0] gamma_bus,
 
 	// for core-specific extensions
 	inout      [35:0] EXT_BUS
